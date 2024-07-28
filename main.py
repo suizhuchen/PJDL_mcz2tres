@@ -23,12 +23,12 @@ def gen_random_uid(length: int = 13) -> str:
     return random_uid
 
 
-def mc2tres(mc_path: str, mcz_path: str) -> str:
+def mc2tres(mc_path: str, mc_dir: str) -> str:
     global sound_path, corrected
-    if not mcz_path.endswith('/'):
-        mcz_path += '/'
-    print('mcz_path:', mcz_path)
-    with open(f'{mcz_path}{mc_path}', 'r', encoding='UTF-8') as mc:
+    if not mc_dir.endswith('\\'):
+        mc_dir += '\\'
+    print('mcz_path:', mc_dir)
+    with open(f'{mc_path}', 'r', encoding='UTF-8') as mc:
         mc_json = json.load(mc)
     # 4k谱面检测
     if mc_json['meta']['mode_ext']['column'] != 4:
@@ -78,10 +78,10 @@ def mc2tres(mc_path: str, mcz_path: str) -> str:
             corrected = int(note['offset']) / 1000
             sound_path = note['sound']
     # 导出
-    os.mkdir(f'{mcz_path}export')
-    shutil.copy(f'{mcz_path}{sound_path}', f'{mcz_path}export/{song_name}.ogg')
-    shutil.copy(f'{mcz_path}{bg}', f'{mcz_path}export/{song_name}.jpg')
-    with Image.open(f'{mcz_path}export/{song_name}.jpg') as img:
+    os.mkdir(f'{mc_dir}export')
+    shutil.copy(f'{mc_dir}{sound_path}', f'{mc_dir}export/{song_name}.ogg')
+    shutil.copy(f'{mc_dir}{bg}', f'{mc_dir}export/{song_name}.jpg')
+    with Image.open(f'{mc_dir}export/{song_name}.jpg') as img:
         width, height = img.size
         if height > width:
             empty = round((height - width) / 2)
@@ -90,7 +90,7 @@ def mc2tres(mc_path: str, mcz_path: str) -> str:
             empty = round((width - height) / 2)
             region = f'Rect2({empty}, 0, {height}, {height})'
     print('region', region)
-    with open(f'{mcz_path}export/{song_name}.tres', 'w', encoding='UTF-8') as tres:
+    with open(f'{mc_dir}export/{song_name}.tres', 'w', encoding='UTF-8') as tres:
         load_step = len(notes) + 6
         cover_uid = f'cover{gen_random_uid(8)}'
         song_uid = f'song{gen_random_uid(9)}'
@@ -127,7 +127,7 @@ def mc2tres(mc_path: str, mcz_path: str) -> str:
         full_tres += '])\n'
         tres.write(full_tres)
     # import文件部分
-    with open(f'{mcz_path}export/{song_name}.jpg.import', 'w', encoding='utf-8') as jpg_import:
+    with open(f'{mc_dir}export/{song_name}.jpg.import', 'w', encoding='utf-8') as jpg_import:
         full_jpg_import = (f'[remap]\n\n'
                            f'importer="texture"\n'
                            f'type="CompressedTexture2D"\n'
@@ -142,7 +142,7 @@ def mc2tres(mc_path: str, mcz_path: str) -> str:
                            f'[params]\n\n'
                            f'dummy_value_ignore_me=0\n')
         jpg_import.write(full_jpg_import)
-    with open(f'{mcz_path}export/{song_name}.ogg.import', 'w', encoding='utf-8') as ogg_import:
+    with open(f'{mc_dir}export/{song_name}.ogg.import', 'w', encoding='utf-8') as ogg_import:
         full_ogg_import = (f'[remap]\n\n'
                            f'importer="oggvorbisstr"\n'
                            f'type="AudioStreamOggVorbis"\n'
@@ -154,16 +154,28 @@ def mc2tres(mc_path: str, mcz_path: str) -> str:
                            f'[params]\n\n'
                            f'dummy_value_ignore_me=0\n')
         ogg_import.write(full_ogg_import)
-    return f'操作完成，请查看{mcz_path}export'
+    return f'操作完成，请查看{mc_dir}export'
 
 
 if __name__ == '__main__':
-    mcz_path = mcz_unzip(input('请输入py文件目录下mcz名：'))
+    mcz = input('请输入py文件目录下mcz名：')
+    mcz_path = mcz.split('.')[0]
+    shutil.rmtree(mcz_path)
+    mcz_unzip(mcz)
+    mc_files = list()
     for root, dirs, files in os.walk(mcz_path):
-        mc_files = files
+        for file in files:
+            # 构建相对路径
+            relative_path = os.path.relpath(os.path.join(root, file), mcz_path)
+            if relative_path.endswith('.mc'):
+                mc_files.append(relative_path)
     for i in range(len(mc_files)):
-        if mc_files[i].endswith('.mc'):
-            print(f'{i}:{mc_files[i]}')
+        print(f'{i}:{mc_files[i]}')
 
     nums = input('请输入欲转换mc文件名序号：')
-    print(mc2tres(mc_files[int(nums)], mcz_path))
+    mc_dir = ''
+    mc_path = os.path.relpath(os.path.join(mcz_path, mc_files[int(nums)]))
+    for i in mc_path.split("\\")[:-1]:
+        mc_dir += i + '\\'
+    mc_dir = os.path.relpath(mc_dir)
+    print(mc2tres(mc_path, mc_dir))
