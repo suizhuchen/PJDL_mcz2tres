@@ -8,6 +8,7 @@ import shutil
 
 
 def mcz_unzip(mcz_path: str) -> str:
+    # 解决解压缩后乱码问题
     zip = zipfile.ZipFile(mcz_path, metadata_encoding='UTF-8')
     os.mkdir(mcz_path.split('.')[0])
     zip.extractall(mcz_path.split('.')[0])
@@ -160,7 +161,8 @@ def mc2tres(mc_path: str, mc_dir: str) -> str:
 if __name__ == '__main__':
     mcz = input('请输入py文件目录下mcz名：')
     mcz_path = mcz.split('.')[0]
-    shutil.rmtree(mcz_path)
+    if os.path.exists(mcz_path):
+        shutil.rmtree(mcz_path)
     mcz_unzip(mcz)
     mc_files = list()
     for root, dirs, files in os.walk(mcz_path):
