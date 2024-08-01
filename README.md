@@ -1,6 +1,6 @@
 # PJDL_mcz2tres
 
-## 这是一个过时版本，请查看(https://github.com/suizhuchen/malody2PJDL)[https://github.com/suizhuchen/malody2PJDL]
+## 这是一个过时版本，请查看https://github.com/suizhuchen/malody2PJDL
 
 基于python实现mcz谱面文件解压缩并转换为Project DaoLi谱面文件的程序
 
